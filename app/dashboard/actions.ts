@@ -4,6 +4,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
+import { dbError } from "@/lib/db-error";
 import { createRunWithScenarios, redactScenario } from "@/lib/runs";
 import { supabase } from "@/lib/supabase";
 import { SCENARIO_STATUSES, type ScenarioStatus } from "@/lib/types";
@@ -80,7 +81,7 @@ export async function updateRun(_prev: ActionState, formData: FormData): Promise
 
   try {
     const { error } = await supabase.from("test_runs").update(fields.data).eq("id", id.data);
-    if (error) throw new Error(`Failed to save run: ${error.message}`);
+    if (error) throw dbError("Failed to save run", error);
   } catch (err) {
     return { error: message(err) };
   }
@@ -104,14 +105,14 @@ export async function addScenario(_prev: ActionState, formData: FormData): Promi
       .order("position", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (lastError) throw new Error(`Failed to add scenario: ${lastError.message}`);
+    if (lastError) throw dbError("Failed to add scenario", lastError);
 
     const { error } = await supabase.from("scenarios").insert({
       ...redactScenario(fields.data),
       run_id: runId.data,
       position: (last?.position ?? -1) + 1,
     });
-    if (error) throw new Error(`Failed to add scenario: ${error.message}`);
+    if (error) throw dbError("Failed to add scenario", error);
   } catch (err) {
     return { error: message(err) };
   }
@@ -129,7 +130,7 @@ export async function updateScenario(_prev: ActionState, formData: FormData): Pr
 
   try {
     const { error } = await supabase.from("scenarios").update(redactScenario(fields.data)).eq("id", id.data);
-    if (error) throw new Error(`Failed to save scenario: ${error.message}`);
+    if (error) throw dbError("Failed to save scenario", error);
   } catch (err) {
     return { error: message(err) };
   }
@@ -146,7 +147,7 @@ export async function setScenarioStatus(scenarioId: string, status: ScenarioStat
 
   try {
     const { error } = await supabase.from("scenarios").update({ status: next.data }).eq("id", id.data);
-    if (error) throw new Error(`Failed to update status: ${error.message}`);
+    if (error) throw dbError("Failed to update status", error);
   } catch (err) {
     return { error: message(err) };
   }
@@ -162,7 +163,7 @@ export async function deleteScenario(scenarioId: string): Promise<ActionState> {
 
   try {
     const { error } = await supabase.from("scenarios").delete().eq("id", id.data);
-    if (error) throw new Error(`Failed to delete scenario: ${error.message}`);
+    if (error) throw dbError("Failed to delete scenario", error);
   } catch (err) {
     return { error: message(err) };
   }

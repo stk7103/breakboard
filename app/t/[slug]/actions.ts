@@ -1,6 +1,7 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { describeDbError } from "@/lib/db-error";
 import { redactText } from "@/lib/redact";
 import { supabase } from "@/lib/supabase";
 import { firstIssue, testerSubmissionSchema } from "@/lib/validation";
@@ -58,7 +59,9 @@ export async function submitFailure(_prev: SubmitState, formData: FormData): Pro
     if (!updated || updated.length === 0) {
       return { error: "Another tester already reported this scenario. Please pick a different open one." };
     }
-  } catch {
+  } catch (err) {
+    // Testers get a generic message; the actionable cause goes to the server log.
+    console.error(`[breakboard] submitFailure: ${describeDbError(err as { message?: string; code?: string })}`);
     return { error: "Couldn't send your report. Please try again." };
   }
 

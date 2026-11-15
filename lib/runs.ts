@@ -1,3 +1,4 @@
+import { dbError } from "@/lib/db-error";
 import { redactText } from "@/lib/redact";
 import { supabase } from "@/lib/supabase";
 import type { RunStatus, Scenario, ScenarioCounts, Severity, TestRun } from "@/lib/types";
@@ -81,7 +82,7 @@ export async function createRunWithScenarios(input: {
       .select("id, slug")
       .single();
     if (!error) run = data;
-    else if (error.code !== UNIQUE_VIOLATION) throw new Error(`Failed to create test run: ${error.message}`);
+    else if (error.code !== UNIQUE_VIOLATION) throw dbError("Failed to create test run", error);
   }
   if (!run) throw new Error("Could not generate a unique slug; please retry.");
 
@@ -100,7 +101,7 @@ export async function createRunWithScenarios(input: {
     const { error } = await supabase.from("scenarios").insert(rows);
     if (error) {
       await supabase.from("test_runs").delete().eq("id", run.id);
-      throw new Error(`Failed to create scenarios: ${error.message}`);
+      throw dbError("Failed to create scenarios", error);
     }
   }
 
@@ -115,8 +116,8 @@ export async function listRunsWithCounts(): Promise<{ runs: RunSummary[]; totals
     supabase.from("test_runs").select(RUN_COLUMNS).order("created_at", { ascending: false }),
     supabase.from("scenarios").select("run_id, status"),
   ]);
-  if (runsRes.error) throw new Error(`Failed to load runs: ${runsRes.error.message}`);
-  if (scenariosRes.error) throw new Error(`Failed to load scenarios: ${scenariosRes.error.message}`);
+  if (runsRes.error) throw dbError("Failed to load runs", runsRes.error);
+  if (scenariosRes.error) throw dbError("Failed to load scenarios", scenariosRes.error);
 
   const totals = emptyCounts();
   const byRun = new Map<string, ScenarioCounts>();
@@ -162,7 +163,7 @@ export async function getPublicBoard(
     .select("id, slug, bot_name, bot_target, description, status")
     .eq("slug", slug)
     .maybeSingle();
-  if (error) throw new Error(`Failed to load board: ${error.message}`);
+  if (error) throw dbError("Failed to load board", error);
   if (!run) return null;
 
   // Draft boards are still being reviewed by a PM: don't expose their scenarios.
@@ -176,14 +177,14 @@ export async function getPublicBoard(
     .eq("run_id", run.id)
     .order("position", { ascending: true })
     .order("created_at", { ascending: true });
-  if (scenariosError) throw new Error(`Failed to load scenarios: ${scenariosError.message}`);
+  if (scenariosError) throw dbError("Failed to load scenarios", scenariosError);
 
   return { run: run as PublicRun, scenarios: (scenarios ?? []) as PublicScenario[] };
 }
 
 export async function getRunWithScenarios(id: string): Promise<{ run: TestRun; scenarios: Scenario[] } | null> {
   const { data: run, error } = await supabase.from("test_runs").select(RUN_COLUMNS).eq("id", id).maybeSingle();
-  if (error) throw new Error(`Failed to load run: ${error.message}`);
+  if (error) throw dbError("Failed to load run", error);
   if (!run) return null;
 
   const { data: scenarios, error: scenariosError } = await supabase
@@ -192,7 +193,7 @@ export async function getRunWithScenarios(id: string): Promise<{ run: TestRun; s
     .eq("run_id", id)
     .order("position", { ascending: true })
     .order("created_at", { ascending: true });
-  if (scenariosError) throw new Error(`Failed to load scenarios: ${scenariosError.message}`);
+  if (scenariosError) throw dbError("Failed to load scenarios", scenariosError);
 
   return { run: run as TestRun, scenarios: (scenarios ?? []) as Scenario[] };
 }

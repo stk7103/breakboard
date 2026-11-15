@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { Card, Logo, RunStatusBadge, cn } from "@/components/ui";
+import { Card, RunStatusBadge, cn } from "@/components/ui";
 import { POINTS, computeLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard";
 import { getPublicBoard, type PublicRun } from "@/lib/runs";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -11,34 +10,12 @@ import { TesterScenarioBoard } from "./scenario-cards";
 
 export const metadata: Metadata = { title: "Break-Test Board" };
 
-/** Public, no-login tester portal. proxy.ts does not match /t/**. */
+/** Public, no-login tester portal. proxy.ts does not match /t/**. Header/footer live in layout.tsx. */
 export default function TesterPortalPage({ params }: PageProps<"/t/[slug]">) {
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" aria-label="BreakBoard home">
-            <Logo />
-          </Link>
-          <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-700">
-            Public tester portal
-          </span>
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
-        <Suspense fallback={<BoardSkeleton />}>
-          <Board params={params} />
-        </Suspense>
-      </main>
-
-      <footer className="border-t border-zinc-200 bg-white">
-        <p className="mx-auto max-w-6xl px-4 py-5 text-center text-xs text-zinc-500 sm:px-6">
-          Please don&apos;t share real personal data. Emails, phone numbers, UPI IDs and ID numbers in reports are masked
-          automatically.
-        </p>
-      </footer>
-    </div>
+    <Suspense fallback={<BoardSkeleton />}>
+      <Board params={params} />
+    </Suspense>
   );
 }
 

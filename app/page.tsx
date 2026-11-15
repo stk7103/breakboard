@@ -160,8 +160,9 @@ function BoardPreview() {
       </div>
       <ul className="divide-y divide-zinc-100">
         {rows.map((r) => (
-          <li key={r.title} className="flex flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap">
-            <div className="min-w-0 flex-1">
+          <li key={r.title} className="flex flex-wrap items-center gap-2 px-4 py-3 sm:flex-nowrap sm:gap-3">
+            {/* Full-width title on phones (badges wrap below), one row from sm up. */}
+            <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
               <p className="truncate text-sm font-medium text-zinc-900">{r.title}</p>
               <p className="text-xs text-zinc-500">{r.cat}</p>
             </div>

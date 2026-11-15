@@ -8,6 +8,7 @@
  */
 import { createMcpHandler, getPublicOrigin } from "mcp-handler";
 import { z } from "zod";
+import { dbError } from "@/lib/db-error";
 import { RUN_COLUMNS, SCENARIO_COLUMNS, createRunWithScenarios } from "@/lib/runs";
 import { supabase } from "@/lib/supabase";
 
@@ -39,7 +40,7 @@ async function findRunBySlug(slug: string) {
     .select(RUN_COLUMNS)
     .eq("slug", slug.trim())
     .maybeSingle();
-  if (error) throw new Error(`Failed to load test run: ${error.message}`);
+  if (error) throw dbError("Failed to load test run", error);
   return data;
 }
 
@@ -122,7 +123,7 @@ const handler = createMcpHandler(
             .select(SCENARIO_COLUMNS)
             .eq("run_id", run.id)
             .order("position", { ascending: true });
-          if (error) throw new Error(`Failed to load scenarios: ${error.message}`);
+          if (error) throw dbError("Failed to load scenarios", error);
 
           const scenarios = data ?? [];
           const counts = { open: 0, submitted: 0, confirmed_bug: 0, dismissed: 0 } as Record<string, number>;
@@ -164,7 +165,7 @@ const handler = createMcpHandler(
             .eq("run_id", run.id)
             .eq("status", "confirmed_bug")
             .order("position", { ascending: true });
-          if (error) throw new Error(`Failed to load confirmed bugs: ${error.message}`);
+          if (error) throw dbError("Failed to load confirmed bugs", error);
 
           const bugs = data ?? [];
           if (bugs.length === 0) {
