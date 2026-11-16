@@ -74,7 +74,7 @@ supabase/schema.sql         Tables, constraints, RLS
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `couldn't reach Supabase` / `TypeError: fetch failed` locally, while the Supabase dashboard works in the browser | Antivirus HTTPS scanning (e.g. AVG/Avast Web Shield) re-signs TLS traffic with its own root certificate, which Node.js doesn't trust by default | Start the dev server with the OS certificate store enabled. PowerShell: `$env:NODE_USE_SYSTEM_CA = '1'; npm.cmd run dev`. Bash: `NODE_USE_SYSTEM_CA=1 npm run dev` |
+| `couldn't reach Supabase` / `TypeError: fetch failed` locally, while the Supabase dashboard works in the browser | Antivirus HTTPS scanning (e.g. AVG/Avast Web Shield) or a corporate proxy re-signs TLS traffic with its own root certificate, which Node.js doesn't trust by default | Handled automatically: `instrumentation.ts` adds the OS certificate store at server start (Node 22.19+ / 24.5+). Restart the dev server after pulling. On older Node, start it with `NODE_USE_SYSTEM_CA=1` |
 | `the BreakBoard tables don't exist in this Supabase project yet` (`PGRST205`) | `supabase/schema.sql` hasn't been run in this project | Run `supabase/schema.sql` (then `supabase/seed.sql`) in the Supabase SQL editor. If the editor offers **Run and enable RLS**, choose **Run without RLS**: the script enables RLS itself |
 | `Supabase rejected the request` | The anon / publishable key was used | Set `SUPABASE_SERVICE_ROLE_KEY` to the secret (`sb_secret_...`) or legacy `service_role` key |
 | `npm.ps1 cannot be loaded because running scripts is disabled` (Windows) | PowerShell execution policy | Use `npm.cmd run dev` instead of `npm run dev` |
